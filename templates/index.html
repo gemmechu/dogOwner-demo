@@ -1,0 +1,156 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <div class="row"  style="margin: 2em; margin-right: 8em;">
+        <div class="col-md-8">
+            <img width="200px" height="200px" onclick="inputLeft.click()" id="person" src="{{ url_for('static', filename='anon.jpg') }}"
+                 class="rounded border img-fluid float-right"
+                 alt="Pair left">
+        </div>
+    </div>
+    <div class="row" style="margin-left: 6em;">
+        <div class="col-md-4 mx-auto">
+            <img width="200px" height="200px" onclick="inputRight.click()" id="a" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left"
+                 alt="Pair left">
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="200px" height="200px" onclick="inputB.click()" id="b" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left"
+                 alt="Pair left">
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="200px" height="200px" onclick="inputC.click()" id="c" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid float-left"
+                 alt="Pair left">
+        </div>
+
+    </div>
+    <div class="col-md-12">
+        <br>
+        <button onclick="predict()" id="btnPredict" class="btn btn-primary mx-auto d-block">Predict</button>
+    </div>
+    <div class="row" style="margin-top: 20px">
+        <div class="col-md-12 text-center">
+            <span style="font-weight: bold;">Dog A : </span> <span  id="dogA">   </span> <span style=" margin-left: 3em; font-weight: bold;"> Score: </span> <span id="scoreA"> </span>
+        </div>
+        <div class="col-md-12 text-center">
+            <span style="font-weight: bold;">Dog b :  </span> <span  id="dogB">  </span> <span style="margin-left: 3em; font-weight: bold;"> Score: </span> <span id="scoreB"></span>
+        </div>
+        <div class="col-md-12 text-center">
+            <span style="font-weight: bold;">Dog C : </span> <span  id="dogC">   </span> <span style="margin-left: 3em; font-weight: bold;"> Score: </span> <span id="scoreC"> </span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <hr>
+            <h5 id="threshold"></h5>
+            <p><b>About Our System</b> it is Joke idea to prove the theory behind Owner and Thier dog Physical Apperance similarity.
+                To train the Network we used <i>FaceNet</i> Architecture. From these research What can be concluded is even though there exist similarity
+                between the Dog and Owner this theory is not always true </p>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        let btnPredict = document.getElementById("btnPredict")
+        let imgPerson = document.getElementById('person');
+        let imgA = document.getElementById('a');
+        let imgB = document.getElementById('b');
+        let imgC = document.getElementById('c');
+        let inputLeft = document.createElement('input');
+        let inputRight = document.createElement('input');
+
+        let inputB = document.createElement('input');
+        let inputC = document.createElement('input');
+
+        let dogA = document.getElementById("dogA");
+        let scoreA = document.getElementById("scoreA");
+
+        let dogB = document.getElementById("dogB");
+        let scoreB = document.getElementById("scoreB");
+
+        let dogC = document.getElementById("dogC");
+        let scoreC = document.getElementById("scoreC");
+
+        let thresholdElement = document.getElementById("threshold");
+        inputLeft.type = 'file';
+        inputLeft.accept = 'image/*';
+        inputRight.type = 'file';
+        inputRight.accept = 'image/*';
+
+        inputB.type = 'file';
+        inputB.accept = 'image/*';
+
+        inputC.type = 'file';
+        inputC.accept = 'image/*';
+        let data = {imgPerson: null, imgA: null,imgB: null,imgC: null};
+
+        inputLeft.onchange = e => {
+            resetBtnPredict()
+            setImageFromObj(imgPerson, e, (file) => {
+                data.imgPerson = file;
+            })
+        };
+
+
+        inputRight.onchange = e => {
+            resetBtnPredict()
+            setImageFromObj(imgA, e, (file) => {
+                data.imgA = file;
+            })
+        };
+        inputB.onchange = e => {
+            resetBtnPredict()
+            setImageFromObj(imgB, e, (file) => {
+                data.imgB = file;
+            })
+        };
+
+        inputC.onchange = e => {
+            resetBtnPredict()
+            setImageFromObj(imgC, e, (file) => {
+                data.imgC = file;
+            })
+        };
+        function resetBtnPredict() {
+            btnPredict.disabled = false;
+            btnPredict.innerText = 'Predict'
+        }
+
+        predict = () => {
+            if (Object.values(data).includes(null))
+                return;
+            btnPredict.disabled = true;
+            btnPredict.innerText = "calculating ...";
+            formData = new FormData();
+            formData.append('imgPerson', data.imgPerson);
+            formData.append('imgA', data.imgA);
+            formData.append('imgB', data.imgB);
+            formData.append('imgC', data.imgC);
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            }).then((r) => r.json().then((data) => {
+                console.log(data);
+                dogA.innerText = `${data.dog_a}`;
+                scoreA.innerText = `${data.score_a}`;
+
+                dogB.innerText = `${data.dog_b}`;
+                scoreB.innerText = `${data.score_b}`;
+
+                dogC.innerText = `${data.dog_c}`;
+                scoreC.innerText = `${data.score_c}`;
+                thresholdElement.innerText = `Threshold: ${data.threshold}`;
+                resetBtnPredict()
+            }))
+        };
+
+        function setImageFromObj(element, obj, fun) {
+            const file = obj.target.files[0];
+            element.src = URL.createObjectURL(file);
+            fun(file)
+        }
+
+
+    </script>
+{% endblock %}
