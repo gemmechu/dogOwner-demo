@@ -6,7 +6,7 @@ DEBUG = False
 THREADS_PER_PAGE = 2
 
 APP_NAME = 'Demo Face Embedding'
-path = '../code/log/best_state.pth'
+path = '../../code/log/best_state.pth'
 # models = [
 #     dict(
 #         model=model_920,
