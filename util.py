@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
-
+import config
 from boot import app
 
 
@@ -14,11 +14,11 @@ class ModelLoaded:
         if not ModelLoaded.model:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             selected_model = app.config['USE_MODEL']
-            model = selected_model['model']()
+            model = selected_model()
             model.to(device)
-            ModelLoaded.acc = selected_model['acc']
-            ModelLoaded.model = torch.nn.DataParallel(model)
-        return ModelLoaded.model
+            state = torch.load(config.path, map_location=lambda storage, loc: storage)
+            model.load_state_dict(state["state_dict"])
+        return model
 
 
 trfrm = transforms.Compose([
@@ -35,9 +35,11 @@ totensor = transforms.Compose(trfrm.transforms[:-1])
 def get_distance(img1, img2):
     model = ModelLoaded.get_model()
     model.eval()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     with torch.no_grad():
         x1 = trfrm(img1).unsqueeze(0)
         x2 = trfrm(img2).unsqueeze(0)
+        x1,x2 = x1.to(device), x2.to(device)
         embed1 = model(x1)
         embed2 = model(x2)
         return F.pairwise_distance(embed1, embed2)
